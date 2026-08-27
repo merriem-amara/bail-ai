@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user, get_db
 from app.models.case import Case
+from app.models.user import User
 from app.schemas.case import CaseCreate, CaseResponse
 
 
@@ -10,17 +11,13 @@ router = APIRouter(
     prefix="/cases",
     tags=["Cases"]
 )
-def create_case(
-    case: CaseCreate,
-    db: Session = Depends(get_db)
-):
 
 
 @router.post("/", response_model=CaseResponse)
 def create_case(
     case: CaseCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
 
     new_case = Case(
@@ -44,8 +41,9 @@ def create_case(
 @router.get("/", response_model=list[CaseResponse])
 def get_cases(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
+
     return (
         db.query(Case)
         .filter(Case.lawyer_id == current_user.id)
@@ -56,12 +54,16 @@ def get_cases(
 @router.get("/{case_id}", response_model=CaseResponse)
 def get_case(
     case_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
 
     case = (
         db.query(Case)
-        .filter(Case.id == case_id)
+        .filter(
+            Case.id == case_id,
+            Case.lawyer_id == current_user.id
+        )
         .first()
     )
 
@@ -72,3 +74,70 @@ def get_case(
         )
 
     return case
+
+
+@router.put("/{case_id}", response_model=CaseResponse)
+def update_case(
+    case_id: int,
+    case_data: CaseCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    case = (
+        db.query(Case)
+        .filter(
+            Case.id == case_id,
+            Case.lawyer_id == current_user.id
+        )
+        .first()
+    )
+
+    if not case:
+        raise HTTPException(
+            status_code=404,
+            detail="Case not found"
+        )
+
+    case.client_name = case_data.client_name
+    case.cnic = case_data.cnic
+    case.fir_number = case_data.fir_number
+    case.police_station = case_data.police_station
+    case.sections = case_data.sections
+    case.court = case_data.court
+    case.summary = case_data.summary
+
+    db.commit()
+    db.refresh(case)
+
+    return case
+
+
+@router.delete("/{case_id}")
+def delete_case(
+    case_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    case = (
+        db.query(Case)
+        .filter(
+            Case.id == case_id,
+            Case.lawyer_id == current_user.id
+        )
+        .first()
+    )
+
+    if not case:
+        raise HTTPException(
+            status_code=404,
+            detail="Case not found"
+        )
+
+    db.delete(case)
+    db.commit()
+
+    return {
+        "message": "Case deleted successfully"
+    }
