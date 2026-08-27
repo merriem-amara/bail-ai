@@ -1,0 +1,11 @@
+{
+  "name": "bail-ai",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.15.1",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "lint": "pnpm --filter web lint"
+  }
+}
