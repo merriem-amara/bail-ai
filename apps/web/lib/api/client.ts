@@ -18,8 +18,12 @@ apiClient.interceptors.request.use(
       const token = localStorage.getItem("access_token");
 
       if (token) {
+        console.log("JWT attached:", token);
+
         config.headers.Authorization =
           `Bearer ${token}`;
+      } else {
+        console.log("NO JWT TOKEN FOUND");
       }
     }
 

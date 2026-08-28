@@ -7,8 +7,7 @@ from app.database import SessionLocal
 from app.models.user import User
 
 
-SECRET_KEY = "change-this-secret-in-production"
-ALGORITHM = "HS256"
+from app.core.config import JWT_SECRET, JWT_ALGORITHM
 
 
 oauth2_scheme = OAuth2PasswordBearer(
@@ -32,8 +31,8 @@ def get_current_user(
     try:
         payload = jwt.decode(
             token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
+            JWT_SECRET,
+            algorithms=[JWT_ALGORITHM]
         )
 
         user_id = payload.get("sub")
